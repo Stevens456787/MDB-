@@ -5,22 +5,80 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>User and Location Manager</title>
   <!-- Tailwind CSS CDN -->
+  <script>
+    // Use class-based dark mode for Tailwind
+    tailwind = window.tailwind || {};
+    tailwind.config = Object.assign(tailwind.config || {}, { darkMode: 'class' });
+    window.tailwind = tailwind;
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Smooth color transitions but respect reduced motion */
+    :root { --transition-duration: 200ms; }
+    html, body, #root { transition: background-color var(--transition-duration), color var(--transition-duration); }
+    @media (prefers-reduced-motion: reduce) { html, body, #root { transition: none !important; } }
+  </style>
+  <script>
+    // Immediately apply saved or system theme before React mounts to avoid flash
+    (function(){
+      try {
+        var t = localStorage.getItem('theme');
+        if (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          t = 'dark';
+        }
+        if (t === 'dark') {
+          document.documentElement.classList.add('dark');
+          console.debug('[theme-init] applied dark theme');
+        } else {
+          document.documentElement.classList.remove('dark');
+          console.debug('[theme-init] applied light theme');
+        }
+      } catch (e) { /* ignore */ }
+    })();
+  </script>
   <!-- React and ReactDOM CDNs -->
   <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.development.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.development.js"></script>
   <!-- Babel CDN for JSX support -->
   <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.22.5/babel.min.js"></script>
 </head>
-<body class="bg-gray-100">
-  <div id="root" class="container mx-auto p-4"></div>
+<body class="bg-gray-100 dark:bg-gray-900">
+  <div id="root" class="container mx-auto p-4 min-h-screen"></div>
 
   <script type="text/babel">
     const { useState, useEffect } = React;
 
     function App() {
+      // Theme state (light | dark)
+      const [theme, setTheme] = useState(() => {
+        try {
+          return localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        } catch (e) {
+          return 'light';
+        }
+      });
+
+      // Apply theme to documentElement (Tailwind expects the 'dark' class on html/documentElement)
+      useEffect(() => {
+        const root = document.documentElement;
+        if (theme === 'dark') {
+          root.classList.add('dark');
+          console.debug('[theme] set dark');
+        } else {
+          root.classList.remove('dark');
+          console.debug('[theme] set light');
+        }
+        try { localStorage.setItem('theme', theme); } catch (e) {}
+      }, [theme]);
+
+      const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+
       // State for users and locations
       const [users, setUsers] = useState([]);
+  // Search term for filtering users
+  const [searchTerm, setSearchTerm] = useState('');
+  // Search term for filtering locations
+  const [locationSearch, setLocationSearch] = useState('');
       const [locations, setLocations] = useState([]);
       const [error, setError] = useState(null);
 
@@ -138,13 +196,31 @@
       };
 
       return (
-        <div className="space-y-8">
-          <h1 className="text-3xl font-bold text-center">User and Location Manager</h1>
+        <div className="space-y-8 text-gray-900 dark:text-gray-100">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold text-center">User and Location Manager</h1>
+            <div className="ml-4 inline-flex items-center gap-3">
+              <button
+                onClick={toggleTheme}
+                aria-pressed={theme === 'dark'}
+                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                className="inline-flex items-center gap-2 px-3 py-2 rounded border bg-gray-200 dark:bg-gray-700 text-sm text-gray-800 dark:text-gray-100 hover:brightness-95"
+              >
+                {theme === 'dark' ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m8.66-11H20M4 12H3m15.36 6.36l-.7.7M6.34 6.34l-.7.7m12.02 0l.7.7M6.34 17.66l.7.7M12 7a5 5 0 100 10 5 5 0 000-10z"/></svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+                )}
+                <span className="sr-only">Toggle dark mode</span>
+              </button>
+              <span className="text-sm text-gray-700 dark:text-gray-200">{theme === 'dark' ? 'Dark' : 'Light'}</span>
+            </div>
+          </div>
 
           {error && <div className="text-red-500 text-center">{error}</div>}
 
           {/* User Form */}
-          <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
             <h2 className="text-2xl font-semibold mb-4">Add New User</h2>
             <div onSubmit={handleUserSubmit} className="space-y-4">
               <input
@@ -153,7 +229,7 @@
                 value={userForm.name}
                 onChange={handleUserChange}
                 placeholder="Name"
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
                 required
               />
               <input
@@ -162,7 +238,7 @@
                 value={userForm.email}
                 onChange={handleUserChange}
                 placeholder="Email"
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
                 required
               />
               <input
@@ -171,7 +247,7 @@
                 value={userForm.password}
                 onChange={handleUserChange}
                 placeholder="Password"
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
                 required
               />
               <input
@@ -180,7 +256,7 @@
                 value={userForm.phoneNumber}
                 onChange={handleUserChange}
                 placeholder="Phone Number"
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
               />
               <input
                 type="text"
@@ -188,11 +264,11 @@
                 value={userForm.address}
                 onChange={handleUserChange}
                 placeholder="Address"
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
               />
               <button
                 onClick={handleUserSubmit}
-                className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+                className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
               >
                 Add User
               </button>
@@ -200,7 +276,7 @@
           </div>
 
           {/* Location Form */}
-          <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
             <h2 className="text-2xl font-semibold mb-4">Add New Location</h2>
             <div onSubmit={handleLocationSubmit} className="space-y-4">
               <input
@@ -209,7 +285,7 @@
                 value={locationForm.name}
                 onChange={handleLocationChange}
                 placeholder="Location Name"
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
                 required
               />
               <input
@@ -218,7 +294,7 @@
                 value={locationForm.address}
                 onChange={handleLocationChange}
                 placeholder="Address"
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
                 required
               />
               <div className="flex space-x-4">
@@ -228,7 +304,7 @@
                   value={locationForm.coordinates.lat}
                   onChange={handleLocationChange}
                   placeholder="Latitude"
-                  className="w-full p-2 border rounded"
+                  className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
                   step="any"
                 />
                 <input
@@ -237,13 +313,13 @@
                   value={locationForm.coordinates.lng}
                   onChange={handleLocationChange}
                   placeholder="Longitude"
-                  className="w-full p-2 border rounded"
+                  className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
                   step="any"
                 />
               </div>
               <button
                 onClick={handleLocationSubmit}
-                className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600"
+                className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700"
               >
                 Add Location
               </button>
@@ -251,38 +327,102 @@
           </div>
 
           {/* Users List */}
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-2xl font-semibold mb-4">Users</h2>
-            {users.length === 0 ? (
-              <p>No users found.</p>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-semibold">Users</h2>
+              <div className="flex items-center space-x-2">
+                <label htmlFor="user-search" className="sr-only">Search users by name</label>
+                <input
+                  id="user-search"
+                  type="search"
+                  placeholder="Search by name"
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="px-3 py-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                />
+                <button
+                  onClick={() => setSearchTerm('')}
+                  title="Clear search"
+                  className="px-3 py-2 rounded border bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+            {/* Only show results when the user types a search query */}
+            {!searchTerm ? (
+              <p className="text-sm text-gray-600 dark:text-gray-300">Type a name above to search users.</p>
             ) : (
-              <ul className="space-y-2">
-                {users.map(user => (
-                  <li key={user._id} className="border-b py-2">
-                    <strong>{user.name}</strong> ({user.email})<br />
-                    Phone: {user.phoneNumber || 'N/A'}<br />
-                    Address: {user.address || 'N/A'}
-                  </li>
-                ))}
-              </ul>
+              (() => {
+                const filtered = users.filter(u => u.name && u.name.toLowerCase().includes(searchTerm.toLowerCase()));
+                return (
+                  <>
+                    {filtered.length === 0 ? (
+                      <p>No users match "{searchTerm}".</p>
+                    ) : (
+                      <ul className="space-y-2">
+                        {filtered.map(user => (
+                          <li key={user._id} className="border-b py-2 border-gray-200 dark:border-gray-700">
+                            <strong>{user.name}</strong> ({user.email})<br />
+                            Phone: {user.phoneNumber || 'N/A'}<br />
+                            Address: {user.address || 'N/A'}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
+                );
+              })()
             )}
           </div>
 
           {/* Locations List */}
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-2xl font-semibold mb-4">Locations</h2>
-            {locations.length === 0 ? (
-              <p>No locations found.</p>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-semibold">Locations</h2>
+              <div className="flex items-center space-x-2">
+                <label htmlFor="location-search" className="sr-only">Search locations by name</label>
+                <input
+                  id="location-search"
+                  type="search"
+                  placeholder="Search locations"
+                  value={locationSearch}
+                  onChange={e => setLocationSearch(e.target.value)}
+                  className="px-3 py-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                />
+                <button
+                  onClick={() => setLocationSearch('')}
+                  title="Clear search"
+                  className="px-3 py-2 rounded border bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+            {/* Only show results when the user types a search query */}
+            {!locationSearch ? (
+              <p className="text-sm text-gray-600 dark:text-gray-300">Type a name above to search locations.</p>
             ) : (
-              <ul className="space-y-2">
-                {locations.map(location => (
-                  <li key={location._id} className="border-b py-2">
-                    <strong>{location.name}</strong><br />
-                    Address: {location.address}<br />
-                    Coordinates: {location.coordinates ? `${location.coordinates.lat}, ${location.coordinates.lng}` : 'N/A'}
-                  </li>
-                ))}
-              </ul>
+              (() => {
+                const filteredLoc = locations.filter(l => l.name && l.name.toLowerCase().includes(locationSearch.toLowerCase()));
+                return (
+                  <>
+                    {filteredLoc.length === 0 ? (
+                      <p>No locations match "{locationSearch}".</p>
+                    ) : (
+                      <ul className="space-y-2">
+                        {filteredLoc.map(location => (
+                          <li key={location._id} className="border-b py-2 border-gray-200 dark:border-gray-700">
+                            <strong>{location.name}</strong><br />
+                            Address: {location.address}<br />
+                            Coordinates: {location.coordinates ? `${location.coordinates.lat}, ${location.coordinates.lng}` : 'N/A'}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
+                );
+              })()
             )}
           </div>
         </div>
