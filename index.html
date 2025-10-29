@@ -38,6 +38,22 @@
     :root { --transition-duration: 200ms; }
     html, body, #root { transition: background-color var(--transition-duration), color var(--transition-duration); }
     @media (prefers-reduced-motion: reduce) { html, body, #root { transition: none !important; } }
+
+    /* Minimal fallback colors so toggle is visible even if Tailwind CDN fails */
+    html:not(.dark) body { background-color: #f3f4f6; color: #111827; }
+    html.dark body { background-color: #111827; color: #f3f4f6; }
+
+    /* Improve input visibility in dark mode */
+    html.dark input, html.dark select, html.dark textarea { color: #f9fafb; background-color: #374151; border-color: #4b5563; caret-color: #93c5fd; }
+    html.dark input::placeholder, html.dark textarea::placeholder { color: #d1d5db; }
+    /* Autofill adjustments */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus {
+      -webkit-text-fill-color: inherit;
+      -webkit-box-shadow: 0 0 0px 1000px inherit inset;
+      transition: background-color 5000s ease-in-out 0s;
+    }
   </style>
   <!-- React and ReactDOM CDNs -->
   <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.development.js"></script>
@@ -74,7 +90,19 @@
         try { localStorage.setItem('theme', theme); } catch (e) {}
       }, [theme]);
 
-      const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+      const toggleTheme = () => {
+        setTheme(prev => {
+          const next = prev === 'dark' ? 'light' : 'dark';
+          const root = document.documentElement;
+          if (next === 'dark') {
+            root.classList.add('dark');
+          } else {
+            root.classList.remove('dark');
+          }
+          try { localStorage.setItem('theme', next); } catch (e) {}
+          return next;
+        });
+      };
 
       // State for users and locations
       const [users, setUsers] = useState([]);
@@ -232,7 +260,7 @@
                 value={userForm.name}
                 onChange={handleUserChange}
                 placeholder="Name"
-                className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                 required
               />
               <input
@@ -241,7 +269,7 @@
                 value={userForm.email}
                 onChange={handleUserChange}
                 placeholder="Email"
-                className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                 required
               />
               <input
@@ -250,7 +278,7 @@
                 value={userForm.password}
                 onChange={handleUserChange}
                 placeholder="Password"
-                className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                 required
               />
               <input
@@ -259,7 +287,7 @@
                 value={userForm.phoneNumber}
                 onChange={handleUserChange}
                 placeholder="Phone Number"
-                className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
               />
               <input
                 type="text"
@@ -267,7 +295,7 @@
                 value={userForm.address}
                 onChange={handleUserChange}
                 placeholder="Address"
-                className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
               />
               <button
                 onClick={handleUserSubmit}
@@ -288,7 +316,7 @@
                 value={locationForm.name}
                 onChange={handleLocationChange}
                 placeholder="Location Name"
-                className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 focus:border-transparent"
                 required
               />
               <input
@@ -307,7 +335,7 @@
                   value={locationForm.coordinates.lat}
                   onChange={handleLocationChange}
                   placeholder="Latitude"
-                  className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                  className="w-full p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 focus:border-transparent"
                   step="any"
                 />
                 <input
@@ -341,7 +369,7 @@
                   placeholder="Search by name"
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  className="px-3 py-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                  className="px-3 py-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent"
                 />
                 <button
                   onClick={() => setSearchTerm('')}
@@ -391,7 +419,7 @@
                   placeholder="Search locations"
                   value={locationSearch}
                   onChange={e => setLocationSearch(e.target.value)}
-                  className="px-3 py-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600"
+                  className="px-3 py-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent"
                 />
                 <button
                   onClick={() => setLocationSearch('')}
