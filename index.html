@@ -4,22 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>User and Location Manager</title>
-  <!-- Tailwind CSS CDN -->
+  <meta name="color-scheme" content="light dark" />
+  <!-- Configure Tailwind for class-based dark mode BEFORE loading the CDN -->
   <script>
-    // Use class-based dark mode for Tailwind
-    tailwind = window.tailwind || {};
-    tailwind.config = Object.assign(tailwind.config || {}, { darkMode: 'class' });
-    window.tailwind = tailwind;
+    window.tailwind = {
+      config: {
+        darkMode: 'class'
+      }
+    };
   </script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    /* Smooth color transitions but respect reduced motion */
-    :root { --transition-duration: 200ms; }
-    html, body, #root { transition: background-color var(--transition-duration), color var(--transition-duration); }
-    @media (prefers-reduced-motion: reduce) { html, body, #root { transition: none !important; } }
-  </style>
+  <!-- Apply saved/system theme ASAP to avoid flashes (must run before CSS loads) -->
   <script>
-    // Immediately apply saved or system theme before React mounts to avoid flash
     (function(){
       try {
         var t = localStorage.getItem('theme');
@@ -36,6 +31,14 @@
       } catch (e) { /* ignore */ }
     })();
   </script>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Smooth color transitions but respect reduced motion */
+    :root { --transition-duration: 200ms; }
+    html, body, #root { transition: background-color var(--transition-duration), color var(--transition-duration); }
+    @media (prefers-reduced-motion: reduce) { html, body, #root { transition: none !important; } }
+  </style>
   <!-- React and ReactDOM CDNs -->
   <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.development.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.development.js"></script>
