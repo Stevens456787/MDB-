@@ -4,16 +4,12 @@ const connectDB = require('./config/db');
 const User = require('./models/user');
 const Location = require('./models/location');
 const cors = require('cors');
-require('dotenv').config({ path: 'C:/Users/Rnyamari/Music/MDB/Mongodb/.env' });
-
-console.log('Environment Variables:', process.env.MONGODB_URI);
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 
 // Serve favicon
 app.use('/favicon.ico', express.static(path.join(__dirname, 'favicon.ico')));
-
-connectDB();
 
 app.use(express.json());
 app.use(cors());
